@@ -1,0 +1,4 @@
+.env
+node_modules
+art_logs/*
+!art_logs/.gitkeep
