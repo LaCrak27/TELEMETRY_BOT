@@ -22,7 +22,7 @@ let currentCanState = {};
 //  id: number;
 //  data: number[];
 // }
-let canMessages = [];
+const canMessages = [];
 
 client.login(token);
 
@@ -75,7 +75,7 @@ mqttClient.on("message", function (topic, message) {
         });
         sessionActive = true;
         lowBatMsgSent = false;
-        canMessages = [];
+        canMessages.length = 0;
       }
 
       // Set timeout every message so that if no message is received
@@ -143,7 +143,7 @@ mqttClient.on("message", function (topic, message) {
 function makeLog() {
   // Process log here
   const logTime = Math.floor(Date.now() / 1000);
-  const timestamp = `<t:${logTime}:f>`; // Example: Short Date/Time format
+  const timestamp = `<t:${logTime}:f>`;
   const f = fs.createWriteStream(`./art_logs/${logTime}.txt`);
   f.on("open", async function (fd) {
     // Writes Kvaser like header
@@ -184,5 +184,6 @@ Settings:
       content: `Car session ended at ${timestamp}, download log here:`,
       files: [`./art_logs/${logTime}.txt`],
     });
+    canMessages.length = 0;
   });
 }
