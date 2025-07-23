@@ -22,7 +22,7 @@ let currentCanState = {};
 //  id: number;
 //  data: number[];
 // }
-const canMessages = [];
+let canMessages = [];
 
 client.login(token);
 
@@ -75,6 +75,7 @@ mqttClient.on("message", function (topic, message) {
         });
         sessionActive = true;
         lowBatMsgSent = false;
+        canMessages = [];
       }
 
       // Set timeout every message so that if no message is received
@@ -157,7 +158,7 @@ Settings:
 
         Time Chan   Identifier Flags        DLC  Data                                                                                                                                                                                                   Counter
 ============================================================================================================================================================================================================================================================\n`);
-    
+
     // Yet another header
     f.write(
       `    0.000  Trigger (type=0x1, active=0x00, pre-trigger=0, post-trigger=-1)\n`
