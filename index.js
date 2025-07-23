@@ -176,7 +176,7 @@ Settings:
           )}                                                                                                                                                                                              ${i}\n`
       );
     }
-    f.close();
+    f.end();
     currentCanState = {};
     sessionActive = false;
     client.channels.cache.get(logChannel).send({
