@@ -73,7 +73,7 @@ mqttClient.on("message", function (topic, message) {
 
       if (!sessionActive) {
         client.channels.cache.get(alertChannel).send({
-          content: `<@&${alertRoleId}> Car started up! Recording log...`,
+          content: `Car started up! Recording log...`,
         });
         sessionActive = true;
         lowBatMsgSent = false;
