@@ -58,6 +58,8 @@ let sessionActive = false;
 let lowBatMsgSent = false;
 let disconnectTimeoutId;
 let prevMsgLen;
+let f;
+let logTime;
 // Receive messages
 mqttClient.on("message", function (topic, message) {
   if (topic === "ART/status") {
@@ -76,6 +78,25 @@ mqttClient.on("message", function (topic, message) {
         sessionActive = true;
         lowBatMsgSent = false;
         canMessages.length = 0;
+        logTime = Math.floor(Date.now() / 1000);
+        f = fs.createWriteStream(`./art_logs/${logTime}.txt`);
+        // Writes Kvaser like header
+        f.write(`                              ARUS ART TELEMETRY Log
+                              ======================
+                                                        
+Settings:
+   Format of data field: HEX
+   Format of id field:   HEX
+   Timestamp Offset:     0          s
+   CAN channel:          1 
+
+        Time Chan   Identifier Flags        DLC  Data                                                                                                                                                                                                   Counter
+============================================================================================================================================================================================================================================================\n`);
+
+        // Yet another header
+        f.write(
+          `    0.000  Trigger (type=0x1, active=0x00, pre-trigger=0, post-trigger=-1)\n`
+        );
       }
 
       // Set timeout every message so that if no message is received
@@ -125,11 +146,16 @@ mqttClient.on("message", function (topic, message) {
           JSON.stringify(newCanState[id]) !==
           JSON.stringify(currentCanState[id])
         ) {
-          canMessages.push({
-            time: msgTime,
-            id: id,
-            data: newCanState[id],
-          });
+          f.write(
+            `    ${
+              msgTime / 1000
+            }  1         ${id}    Rx            8  ${newCanState[id]
+              .filter((n) => n !== undefined)
+              .map((n) => n.toString(16).toUpperCase().padStart(2, "0"))
+              .join(
+                " "
+              )}                                                                                                                                                                                              ${i}\n`
+          );
         }
       }
 
@@ -141,49 +167,13 @@ mqttClient.on("message", function (topic, message) {
 });
 
 function makeLog() {
-  // Process log here
-  const logTime = Math.floor(Date.now() / 1000);
   const timestamp = `<t:${logTime}:f>`;
-  const f = fs.createWriteStream(`./art_logs/${logTime}.txt`);
-  f.on("open", async function (fd) {
-    // Writes Kvaser like header
-    f.write(`                              ARUS ART TELEMETRY Log
-                              ======================
-                                                        
-Settings:
-   Format of data field: HEX
-   Format of id field:   HEX
-   Timestamp Offset:     0          s
-   CAN channel:          1 
-
-        Time Chan   Identifier Flags        DLC  Data                                                                                                                                                                                                   Counter
-============================================================================================================================================================================================================================================================\n`);
-
-    // Yet another header
-    f.write(
-      `    0.000  Trigger (type=0x1, active=0x00, pre-trigger=0, post-trigger=-1)\n`
-    );
-
-    for (let i = 0; i < canMessages.length; i++) {
-      // Format is stupid cuz of kvaser, this just adds the line
-      f.write(
-        `    ${canMessages[i].time / 1000}  1         ${
-          canMessages[i].id
-        }    Rx            8  ${canMessages[i].data
-          .filter((n) => n !== undefined)
-          .map((n) => n.toString(16).toUpperCase().padStart(2, "0"))
-          .join(
-            " "
-          )}                                                                                                                                                                                              ${i}\n`
-      );
-    }
-    f.end();
-    currentCanState = {};
-    sessionActive = false;
-    client.channels.cache.get(logChannel).send({
-      content: `Car session ended at ${timestamp}, download log here:`,
-      files: [`./art_logs/${logTime}.txt`],
-    });
-    canMessages.length = 0;
+  f.end();
+  currentCanState = {};
+  sessionActive = false;
+  client.channels.cache.get(logChannel).send({
+    content: `Car session at ${timestamp} ended, download log here:`,
+    files: [`./art_logs/${logTime}.txt`],
   });
+  canMessages.length = 0;
 }
