@@ -147,9 +147,9 @@ Settings:
           JSON.stringify(currentCanState[id])
         ) {
           f.write(
-            `    ${
-              msgTime / 1000
-            }  1         ${id}    Rx            8  ${newCanState[id]
+            `    ${msgTime / 1000}  1         ${Number(id).toString(
+              16
+            )}    Rx            8  ${newCanState[id]
               .filter((n) => n !== undefined)
               .map((n) => n.toString(16).toUpperCase().padStart(2, "0"))
               .join(
@@ -167,13 +167,8 @@ Settings:
 });
 
 function makeLog() {
-  const timestamp = `<t:${logTime}:f>`;
   f.end();
   currentCanState = {};
   sessionActive = false;
-  client.channels.cache.get(logChannel).send({
-    content: `Car session at ${timestamp} ended, download log here:`,
-    files: [`./art_logs/${logTime}.txt`],
-  });
   canMessages.length = 0;
 }
